@@ -2,9 +2,23 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:strokeColor="#FFFFFF" android:strokeWidth="2" android:strokeLineCap="round" android:pathData="M45,45L40,37"/>
-    <path android:strokeColor="#FFFFFF" android:strokeWidth="2" android:strokeLineCap="round" android:pathData="M63,45L68,37"/>
-    <path android:fillColor="#FFFFFF" android:pathData="M38,72L38,58A16,16 0 0 1 70,58L70,72Z"/>
-    <path android:fillColor="@color/ic_launcher_background" android:pathData="M45,54a2,2 0 1 0 4,0a2,2 0 1 0 -4,0"/>
-    <path android:fillColor="@color/ic_launcher_background" android:pathData="M59,54a2,2 0 1 0 4,0a2,2 0 1 0 -4,0"/>
+    <!-- Steam -->
+    <path android:strokeColor="@color/ic_launcher_accent" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M44,34 Q41,30 44,26"/>
+    <path android:strokeColor="@color/ic_launcher_accent" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M54,32 Q51,28 54,24"/>
+    <path android:strokeColor="@color/ic_launcher_accent" android:strokeWidth="3" android:strokeLineCap="round"
+        android:pathData="M64,34 Q61,30 64,26"/>
+    <!-- Egg, standing in the water -->
+    <path android:fillColor="#FFFFFF" android:strokeColor="@color/ic_launcher_accent" android:strokeWidth="2"
+        android:pathData="M54,38 C62,38 66,47 66,54 C66,62 61,68 54,68 C47,68 42,62 42,54 C42,47 46,38 54,38 Z"/>
+    <!-- Pot body -->
+    <path android:fillColor="@color/ic_launcher_pot"
+        android:pathData="M33,64 L75,64 L71,86 Q70,90 66,90 L42,90 Q38,90 37,86 Z"/>
+    <!-- Water -->
+    <path android:fillColor="@color/ic_launcher_water"
+        android:pathData="M36,70 Q44,66 52,70 T72,70 L70,84 Q69,86 66,86 L42,86 Q39,86 38,84 Z"/>
+    <!-- Pot rim -->
+    <path android:fillColor="@color/ic_launcher_pot"
+        android:pathData="M29,60 L79,60 Q81,60 81,62 L81,65 Q81,66 80,66 L28,66 Q27,66 27,65 L27,62 Q27,60 29,60 Z"/>
 </vector>
