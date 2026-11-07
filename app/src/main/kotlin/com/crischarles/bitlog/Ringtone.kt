@@ -76,12 +76,14 @@ class RingPlayer(private val context: Context) {
 
     fun play(customUri: String?) {
         stop()
-        val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        audio.setStreamVolume(
-            AudioManager.STREAM_ALARM,
-            audio.getStreamMaxVolume(AudioManager.STREAM_ALARM),
-            0,
-        )
+        try {
+            val audio = context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            audio.setStreamVolume(
+                AudioManager.STREAM_ALARM,
+                audio.getStreamMaxVolume(AudioManager.STREAM_ALARM),
+                0,
+            )
+        } catch (_: Exception) {}
 
         val started = customUri != null &&
             startWith { it.setDataSource(context, Uri.parse(customUri)) }

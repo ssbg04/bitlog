@@ -18,6 +18,12 @@ class AppSettings(context: Context) {
     var ringtoneUri by mutableStateOf(prefs.getString(KEY_RINGTONE, "") ?: "")
         private set
 
+    var notchNotificationEnabled by mutableStateOf(prefs.getBoolean(KEY_NOTCH_NOTIFICATION, true))
+        private set
+
+    var systemNotificationEnabled by mutableStateOf(prefs.getBoolean(KEY_SYSTEM_NOTIFICATION, true))
+        private set
+
     fun setBackground(uri: String) {
         prefs.edit().putString(KEY_BACKGROUND, uri).apply()
         backgroundUri = uri
@@ -28,8 +34,20 @@ class AppSettings(context: Context) {
         ringtoneUri = uri
     }
 
+    fun setNotchNotification(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_NOTCH_NOTIFICATION, enabled).apply()
+        notchNotificationEnabled = enabled
+    }
+
+    fun setSystemNotification(enabled: Boolean) {
+        prefs.edit().putBoolean(KEY_SYSTEM_NOTIFICATION, enabled).apply()
+        systemNotificationEnabled = enabled
+    }
+
     private companion object {
         const val KEY_BACKGROUND = "background_uri"
         const val KEY_RINGTONE = "ringtone_uri"
+        const val KEY_NOTCH_NOTIFICATION = "notch_notification"
+        const val KEY_SYSTEM_NOTIFICATION = "system_notification"
     }
 }

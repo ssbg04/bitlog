@@ -27,6 +27,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -138,6 +139,7 @@ fun LiquidButton(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pressScale = remember { Animatable(1f) }
+    val currentOnClick by rememberUpdatedState(onClick)
     val shape = RoundedCornerShape(corner)
 
     val baseModifier = if (supportsLiquidGlass) {
@@ -187,7 +189,7 @@ fun LiquidButton(
                         }
                     },
                     onTap = {
-                        if (enabled) onClick()
+                        if (enabled) currentOnClick()
                     },
                 )
             }
@@ -214,6 +216,7 @@ fun LiquidIconButton(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val pressScale = remember { Animatable(1f) }
+    val currentOnClick by rememberUpdatedState(onClick)
 
     val baseModifier = if (supportsLiquidGlass) {
         modifier.size(size).drawBackdrop(
@@ -259,7 +262,7 @@ fun LiquidIconButton(
                         }
                     },
                     onTap = {
-                        if (enabled) onClick()
+                        if (enabled) currentOnClick()
                     },
                 )
             },
@@ -285,6 +288,9 @@ fun LiquidStepper(
     modifier: Modifier = Modifier,
     onChange: (Int) -> Unit,
 ) {
+    val currentOnChange by rememberUpdatedState(onChange)
+    val currentValue by rememberUpdatedState(value)
+
     Row(
         modifier = modifier.fillMaxWidth(),
         verticalAlignment = Alignment.CenterVertically,
@@ -301,7 +307,7 @@ fun LiquidStepper(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             LiquidIconButton(
-                onClick = { onChange((value - step).coerceIn(range)) },
+                onClick = { currentOnChange((currentValue - step).coerceIn(range)) },
                 backdrop = backdrop,
                 size = 38.dp,
                 surfaceColor = surfaceColor,
@@ -329,7 +335,7 @@ fun LiquidStepper(
             }
 
             LiquidIconButton(
-                onClick = { onChange((value + step).coerceIn(range)) },
+                onClick = { currentOnChange((currentValue + step).coerceIn(range)) },
                 backdrop = backdrop,
                 size = 38.dp,
                 surfaceColor = surfaceColor,

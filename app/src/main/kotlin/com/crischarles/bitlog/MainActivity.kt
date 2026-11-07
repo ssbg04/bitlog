@@ -1,22 +1,47 @@
 package com.crischarles.bitlog
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.Column
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
 
 class MainActivity : ComponentActivity() {
+
+    private val requestNotificationPermission =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* handled */ }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Android draws the app under the status and navigation bars.
-        // safeDrawingPadding keeps the content clear of the bars.
         enableEdgeToEdge()
+
+        // Request POST_NOTIFICATIONS on Android 13+ (API 33+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                requestNotificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            }
+        }
+
         setContent {
             EggTimerScreen()
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // App is now open in foreground: hide floating notch overlay
+        EggTimerManager.setAppForeground(this, true)
+    }
+
+    override fun onStop() {
+        super.onStop()
+        // App is now in background / not open: activate notch overlay if timer is active
+        EggTimerManager.setAppForeground(this, false)
     }
 }
 

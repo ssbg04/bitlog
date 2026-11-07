@@ -1,0 +1,173 @@
+{
+  "profiles": {
+    "hyperos": {
+      "name": "Xiaomi HyperOS / MIUI",
+      "smallPill": {
+        "minWidthDp": 172,
+        "heightDp": 38,
+        "cornerRadiusDp": 19,
+        "topOffsetDp": 6,
+        "paddingHorizontalDp": 12,
+        "backgroundColor": "#0A0A0C",
+        "borderColor": "#30FFFFFF",
+        "borderWidthDp": 1.2,
+        "showMiniProgress": true
+      },
+      "bigIsland": {
+        "widthDp": 340,
+        "heightDp": 170,
+        "cornerRadiusDp": 32,
+        "topOffsetDp": 8,
+        "backgroundColor": "#0B0C0E",
+        "borderColor": "#3FFFFFFF",
+        "borderWidthDp": 1.5,
+        "blurBackground": true
+      }
+    },
+    "oneui": {
+      "name": "Samsung One UI",
+      "smallPill": {
+        "minWidthDp": 168,
+        "heightDp": 36,
+        "cornerRadiusDp": 18,
+        "topOffsetDp": 8,
+        "paddingHorizontalDp": 11,
+        "backgroundColor": "#0E1117",
+        "borderColor": "#29FFFFFF",
+        "borderWidthDp": 1.0,
+        "showMiniProgress": true
+      },
+      "bigIsland": {
+        "widthDp": 330,
+        "heightDp": 165,
+        "cornerRadiusDp": 30,
+        "topOffsetDp": 10,
+        "backgroundColor": "#12141A",
+        "borderColor": "#33FFFFFF",
+        "borderWidthDp": 1.2,
+        "blurBackground": true
+      }
+    },
+    "coloros": {
+      "name": "Oppo / Realme / OnePlus ColorOS",
+      "smallPill": {
+        "minWidthDp": 170,
+        "heightDp": 38,
+        "cornerRadiusDp": 19,
+        "topOffsetDp": 6,
+        "paddingHorizontalDp": 12,
+        "backgroundColor": "#080809",
+        "borderColor": "#33FFFFFF",
+        "borderWidthDp": 1.2,
+        "showMiniProgress": true
+      },
+      "bigIsland": {
+        "widthDp": 336,
+        "heightDp": 168,
+        "cornerRadiusDp": 32,
+        "topOffsetDp": 8,
+        "backgroundColor": "#0C0D0F",
+        "borderColor": "#3DFFFFFF",
+        "borderWidthDp": 1.4,
+        "blurBackground": true
+      }
+    },
+    "originos": {
+      "name": "Vivo / iQOO OriginOS",
+      "smallPill": {
+        "minWidthDp": 174,
+        "heightDp": 37,
+        "cornerRadiusDp": 18.5,
+        "topOffsetDp": 7,
+        "paddingHorizontalDp": 12,
+        "backgroundColor": "#08090C",
+        "borderColor": "#2EFFFFFF",
+        "borderWidthDp": 1.1,
+        "showMiniProgress": true
+      },
+      "bigIsland": {
+        "widthDp": 338,
+        "heightDp": 170,
+        "cornerRadiusDp": 32,
+        "topOffsetDp": 9,
+        "backgroundColor": "#0D0E12",
+        "borderColor": "#38FFFFFF",
+        "borderWidthDp": 1.3,
+        "blurBackground": true
+      }
+    },
+    "magicos": {
+      "name": "Honor / Huawei MagicOS / EMUI",
+      "smallPill": {
+        "minWidthDp": 176,
+        "heightDp": 38,
+        "cornerRadiusDp": 19,
+        "topOffsetDp": 6,
+        "paddingHorizontalDp": 12,
+        "backgroundColor": "#070708",
+        "borderColor": "#36FFFFFF",
+        "borderWidthDp": 1.2,
+        "showMiniProgress": true
+      },
+      "bigIsland": {
+        "widthDp": 340,
+        "heightDp": 172,
+        "cornerRadiusDp": 32,
+        "topOffsetDp": 8,
+        "backgroundColor": "#0A0B0E",
+        "borderColor": "#40FFFFFF",
+        "borderWidthDp": 1.5,
+        "blurBackground": true
+      }
+    },
+    "pixel_aosp": {
+      "name": "Google Pixel / AOSP / Pure Android",
+      "smallPill": {
+        "minWidthDp": 166,
+        "heightDp": 36,
+        "cornerRadiusDp": 18,
+        "topOffsetDp": 7,
+        "paddingHorizontalDp": 11,
+        "backgroundColor": "#131315",
+        "borderColor": "#2EFFFFFF",
+        "borderWidthDp": 1.0,
+        "showMiniProgress": true
+      },
+      "bigIsland": {
+        "widthDp": 330,
+        "heightDp": 164,
+        "cornerRadiusDp": 28,
+        "topOffsetDp": 8,
+        "backgroundColor": "#17181B",
+        "borderColor": "#33FFFFFF",
+        "borderWidthDp": 1.2,
+        "blurBackground": true
+      }
+    },
+    "generic": {
+      "name": "Universal Android Notch",
+      "smallPill": {
+        "minWidthDp": 170,
+        "heightDp": 38,
+        "cornerRadiusDp": 19,
+        "topOffsetDp": 7,
+        "paddingHorizontalDp": 12,
+        "backgroundColor": "#0C0C0E",
+        "borderColor": "#33FFFFFF",
+        "borderWidthDp": 1.2,
+        "showMiniProgress": true
+      },
+      "bigIsland": {
+        "widthDp": 336,
+        "heightDp": 168,
+        "cornerRadiusDp": 30,
+        "topOffsetDp": 8,
+        "backgroundColor": "#101114",
+        "borderColor": "#38FFFFFF",
+        "borderWidthDp": 1.4,
+        "blurBackground": true
+      }
+    }
+  }
+}
+

@@ -6,12 +6,19 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
-data class EggPreset(val name: String, val seconds: Int)
+data class EggPreset(
+    val name: String,
+    val seconds: Int,
+    val description: String = "",
+)
 
 val EggPresets = listOf(
-    EggPreset("Soft-boiled", 6 * 60),
-    EggPreset("Medium", 8 * 60),
-    EggPreset("Hard-boiled", 10 * 60),
+    EggPreset("Poached", 3 * 60 + 30, "Delicate poached egg, liquid center"),
+    EggPreset("Soft-boiled", 6 * 60, "Runny golden yolk, tender delicate white"),
+    EggPreset("Jammy / Ramen", 6 * 60 + 45, "Custardy jammy yolk, set white (Ajitsuke Tamago)"),
+    EggPreset("Medium", 8 * 60, "Fudgey rich yolk, firm white"),
+    EggPreset("Hard-boiled", 10 * 60, "Solid bright yellow yolk, firm white"),
+    EggPreset("Onsen Tamago", 13 * 60, "Silky hot spring egg, custard white"),
 )
 
 data class HistoryEntry(

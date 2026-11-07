@@ -1,15 +1,12 @@
 package com.crischarles.bitlog
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -22,11 +19,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -43,10 +42,6 @@ import com.kyant.backdrop.effects.lens
 import com.kyant.backdrop.effects.vibrancy
 import com.kyant.backdrop.highlight.Highlight
 
-/**
- * Apple iOS Liquid Glass Settings Modal Dialog.
- * Replaces Material UI AlertDialog with a pure Kyant0 backdrop glass sheet.
- */
 @Composable
 fun SettingsDialog(
     settings: AppSettings,
@@ -84,11 +79,14 @@ fun SettingsDialog(
         }
     }
 
+    var canOverlay by remember {
+        mutableStateOf(OverlayPermissionHelper.canDrawOverlays(context))
+    }
+
     Dialog(
         onDismissRequest = onDismiss,
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
-        // Scrim overlay with tap outside to dismiss
         Box(
             modifier = Modifier
                 .fillMaxSize()
@@ -101,7 +99,6 @@ fun SettingsDialog(
                 .padding(24.dp),
             contentAlignment = Alignment.Center,
         ) {
-            // Glass modal card
             val shape = RoundedCornerShape(32.dp)
             val dialogModifier = if (supportsLiquidGlass) {
                 Modifier
@@ -134,7 +131,7 @@ fun SettingsDialog(
                         onClick = { /* prevent tap through */ },
                     )
                     .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(20.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 // Header
                 Row(
@@ -159,6 +156,115 @@ fun SettingsDialog(
                             style = AppTypography.Callout,
                             color = textColor,
                         )
+                    }
+                }
+
+                // NOTCH & BACKGROUND NOTIFICATIONS
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    LiquidText(
+                        text = "Notifications & Notch (${OsDetector.currentFlavor.displayName})",
+                        style = AppTypography.Headline,
+                        fontWeight = FontWeight.SemiBold,
+                        color = textColor,
+                    )
+
+                    // System Notification Switch
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            LiquidText(
+                                text = "Status Bar Notification",
+                                style = AppTypography.Callout,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textColor,
+                            )
+                            LiquidText(
+                                text = "Live countdown & actions in notification bar",
+                                style = AppTypography.Footnote,
+                                color = secondaryTextColor,
+                            )
+                        }
+
+                        LiquidButton(
+                            onClick = {
+                                settings.setSystemNotification(!settings.systemNotificationEnabled)
+                            },
+                            backdrop = backdrop,
+                            surfaceColor = if (settings.systemNotificationEnabled) {
+                                Color(0xFF34C759).copy(alpha = 0.85f)
+                            } else surfaceColor,
+                        ) {
+                            LiquidText(
+                                text = if (settings.systemNotificationEnabled) "On" else "Off",
+                                style = AppTypography.Caption,
+                                fontWeight = FontWeight.Bold,
+                                color = if (settings.systemNotificationEnabled) Color.White else secondaryTextColor,
+                            )
+                        }
+                    }
+
+                    // Notch Dynamic Island Notification
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            LiquidText(
+                                text = "Notch Dynamic Island",
+                                style = AppTypography.Callout,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textColor,
+                            )
+                            LiquidText(
+                                text = "Floating capsule around camera notch when app is in background",
+                                style = AppTypography.Footnote,
+                                color = secondaryTextColor,
+                            )
+                        }
+
+                        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                            if (!canOverlay && settings.notchNotificationEnabled) {
+                                LiquidButton(
+                                    onClick = {
+                                        OverlayPermissionHelper.launchOverlaySettings(context)
+                                    },
+                                    backdrop = backdrop,
+                                    surfaceColor = accentColor.copy(alpha = 0.85f),
+                                ) {
+                                    LiquidText(
+                                        text = "Permission",
+                                        style = AppTypography.Caption,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White,
+                                    )
+                                }
+                            }
+
+                            LiquidButton(
+                                onClick = {
+                                    val newState = !settings.notchNotificationEnabled
+                                    settings.setNotchNotification(newState)
+                                    if (newState && !canOverlay) {
+                                        OverlayPermissionHelper.launchOverlaySettings(context)
+                                    }
+                                },
+                                backdrop = backdrop,
+                                surfaceColor = if (settings.notchNotificationEnabled && canOverlay) {
+                                    Color(0xFF34C759).copy(alpha = 0.85f)
+                                } else surfaceColor,
+                            ) {
+                                LiquidText(
+                                    text = if (settings.notchNotificationEnabled) "On" else "Off",
+                                    style = AppTypography.Caption,
+                                    fontWeight = FontWeight.Bold,
+                                    color = if (settings.notchNotificationEnabled && canOverlay) Color.White else secondaryTextColor,
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -262,7 +368,7 @@ fun SettingsDialog(
                     }
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                Spacer(modifier = Modifier.height(2.dp))
 
                 // Done Button
                 LiquidButton(

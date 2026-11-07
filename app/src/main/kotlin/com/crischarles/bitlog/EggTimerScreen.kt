@@ -1,8 +1,12 @@
 package com.crischarles.bitlog
 
+import android.content.Context
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.net.Uri
+import android.os.Build
+import android.provider.Settings
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -48,6 +52,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -58,8 +63,12 @@ import androidx.compose.ui.unit.sp
 import com.kyant.backdrop.backdrops.LayerBackdrop
 import com.kyant.backdrop.backdrops.layerBackdrop
 import com.kyant.backdrop.backdrops.rememberLayerBackdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.blur
+import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.effects.vibrancy
+import com.kyant.backdrop.highlight.Highlight
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -68,9 +77,8 @@ import java.util.Locale
 @Composable
 fun EggTimerScreen() {
     val context = LocalContext.current
-    val timer = remember { EggTimerState() }
+    val timer = EggTimerManager.state
     val settings = remember { AppSettings(context) }
-    val ring = remember { RingPlayer(context) }
     val timeFormat = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
 
     var manualMinutes by remember { mutableIntStateOf(5) }
@@ -86,23 +94,6 @@ fun EggTimerScreen() {
     val backdrop = rememberLayerBackdrop {
         drawRect(Color(0xFFEEF2FA))
         drawContent()
-    }
-
-    // Timer countdown loop
-    LaunchedEffect(timer.running) {
-        while (timer.running) {
-            delay(1000)
-            timer.tick()
-        }
-    }
-
-    // Audio alarm trigger
-    LaunchedEffect(timer.ringing) {
-        if (timer.ringing) ring.play(settings.ringtoneUri.ifEmpty { null }) else ring.stop()
-    }
-
-    DisposableEffect(Unit) {
-        onDispose { ring.stop() }
     }
 
     // Reset minimized state when timer finishes or stops
@@ -129,7 +120,6 @@ fun EggTimerScreen() {
                         ?.use { stream ->
                             val bitmap = BitmapFactory.decodeStream(stream)
                             if (bitmap != null) {
-                                // Calculate responsive average luminance from a downsampled 16x16 grid
                                 val sample = Bitmap.createScaledBitmap(bitmap, 16, 16, true)
                                 val pixels = IntArray(256)
                                 sample.getPixels(pixels, 0, 16, 0, 0, 16, 16)
@@ -152,22 +142,23 @@ fun EggTimerScreen() {
         }
     }
 
-    // Smoothly animate the luminance for fluid theme adaptation
     val animatedLuminance = animateFloatAsState(
         targetValue = imageLuminance,
         animationSpec = IosInteractiveSpring,
         label = "animated_luminance",
     )
 
-    // Responsive colors based on background image luminance
     val isLightBackground = animatedLuminance.value > 0.48f
     val textColor = if (isLightBackground) Color(0xFF0F172A) else Color(0xFFF9FAFB)
     val secondaryTextColor = if (isLightBackground) Color(0xFF475569) else Color(0xCCF9FAFB)
     val glassSurfaceColor = if (isLightBackground) Color.White.copy(alpha = 0.28f) else Color.White.copy(alpha = 0.12f)
-    val accentColor = Color(0xFFFF9500) // Apple signature warm egg amber
+    val accentColor = Color(0xFFFF9500)
+
+    val canDrawOverlays = remember(isTimerActive) {
+        OverlayPermissionHelper.canDrawOverlays(context)
+    }
 
     Box(Modifier.fillMaxSize()) {
-        // Background canvas with layerBackdrop
         AbstractBackground(photo = photo, backdrop = backdrop)
 
         // MAIN OVERVIEW SCREEN
@@ -251,7 +242,7 @@ fun EggTimerScreen() {
                         color = accentColor,
                     )
                     LiquidButton(
-                        onClick = { timer.dismissRing() },
+                        onClick = { EggTimerManager.dismissRing(context) },
                         backdrop = backdrop,
                         modifier = Modifier.fillMaxWidth(),
                         tint = accentColor,
@@ -274,7 +265,13 @@ fun EggTimerScreen() {
                     ) {
                         if (timer.remainingSeconds > 0) {
                             LiquidButton(
-                                onClick = { if (timer.running) timer.pause() else timer.resume() },
+                                onClick = {
+                                    if (timer.running) {
+                                        EggTimerManager.pauseTimer(context)
+                                    } else {
+                                        EggTimerManager.resumeTimer(context)
+                                    }
+                                },
                                 backdrop = backdrop,
                                 modifier = Modifier.weight(1f),
                                 tint = if (timer.running) Color(0xFF007AFF) else accentColor,
@@ -304,8 +301,7 @@ fun EggTimerScreen() {
 
                         LiquidButton(
                             onClick = {
-                                timer.stop()
-                                timer.dismissRing()
+                                EggTimerManager.stopTimer(context)
                                 userMinimizedFullscreen = false
                             },
                             backdrop = backdrop,
@@ -316,6 +312,49 @@ fun EggTimerScreen() {
                                 style = AppTypography.Callout,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color(0xFFFF3B30),
+                            )
+                        }
+                    }
+                }
+            }
+
+            // NOTCH PERMISSION PROMPT BANNER
+            if (isTimerActive && settings.notchNotificationEnabled && !canDrawOverlays && Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                LiquidGlassPanel(backdrop = backdrop, surfaceColor = glassSurfaceColor) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            LiquidText(
+                                text = "Dynamic Island Notch Capsule",
+                                style = AppTypography.Callout,
+                                fontWeight = FontWeight.Bold,
+                                color = textColor,
+                            )
+                            LiquidText(
+                                text = "Allow display over apps to see the timer at the top notch when multitasking.",
+                                style = AppTypography.Caption,
+                                color = secondaryTextColor,
+                            )
+                        }
+
+                        Spacer(modifier = Modifier.width(10.dp))
+
+                        LiquidButton(
+                            onClick = {
+                                OverlayPermissionHelper.launchOverlaySettings(context)
+                            },
+                            backdrop = backdrop,
+                            tint = accentColor,
+                            surfaceColor = accentColor.copy(alpha = 0.85f),
+                        ) {
+                            LiquidText(
+                                text = "Enable",
+                                style = AppTypography.Caption,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.White,
                             )
                         }
                     }
@@ -353,7 +392,7 @@ fun EggTimerScreen() {
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = null,
                                             onClick = {
-                                                timer.start(preset.name, preset.seconds)
+                                                EggTimerManager.startTimer(context, preset.name, preset.seconds)
                                                 userMinimizedFullscreen = false
                                             },
                                         )
@@ -370,11 +409,7 @@ fun EggTimerScreen() {
                                             color = textColor,
                                         )
                                         LiquidText(
-                                            text = when (preset.name) {
-                                                "Soft-boiled" -> "Runny golden yolk, delicate white"
-                                                "Medium" -> "Custardy jammy yolk, tender white"
-                                                else -> "Fully set yolk, firm white"
-                                            },
+                                            text = preset.description.ifEmpty { "Cooked to perfection" },
                                             style = AppTypography.Footnote,
                                             color = secondaryTextColor,
                                         )
@@ -403,6 +438,23 @@ fun EggTimerScreen() {
                     onToggle = { manualOpen = !manualOpen },
                 ) {
                     Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
+                        val predictedDoneness = when {
+                            manualTotal == 0 -> "Set cooking duration to start"
+                            manualTotal < 4 * 60 -> "🥚 Very Runny · Poached texture"
+                            manualTotal <= 6 * 60 -> "🍳 Soft-boiled · Liquid yolk"
+                            manualTotal <= 7 * 60 + 30 -> "🍜 Jammy / Ramen Egg · Custardy yolk"
+                            manualTotal <= 9 * 60 -> "🥪 Medium · Fudgey rich yolk"
+                            manualTotal <= 12 * 60 -> "🥗 Hard-boiled · Solid bright yolk"
+                            else -> "♨️ Extra firm · Tea egg / Marinated"
+                        }
+
+                        LiquidText(
+                            text = predictedDoneness,
+                            style = AppTypography.Callout,
+                            fontWeight = FontWeight.SemiBold,
+                            color = accentColor,
+                        )
+
                         LiquidStepper(
                             label = "Minutes",
                             value = manualMinutes,
@@ -425,9 +477,53 @@ fun EggTimerScreen() {
                             onChange = { manualSeconds = it },
                         )
 
+                        // Quick-add minute chips
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        ) {
+                            listOf(1, 3, 5).forEach { addMin ->
+                                LiquidButton(
+                                    onClick = {
+                                        manualMinutes = (manualMinutes + addMin).coerceAtMost(99)
+                                    },
+                                    backdrop = backdrop,
+                                    modifier = Modifier.weight(1f),
+                                    surfaceColor = glassSurfaceColor,
+                                ) {
+                                    LiquidText(
+                                        text = "+${addMin}m",
+                                        style = AppTypography.Callout,
+                                        fontWeight = FontWeight.SemiBold,
+                                        color = textColor,
+                                    )
+                                }
+                            }
+                            LiquidButton(
+                                onClick = {
+                                    manualMinutes = 0
+                                    manualSeconds = 0
+                                },
+                                backdrop = backdrop,
+                                modifier = Modifier.weight(1f),
+                                surfaceColor = glassSurfaceColor,
+                            ) {
+                                LiquidText(
+                                    text = "0:00",
+                                    style = AppTypography.Callout,
+                                    fontWeight = FontWeight.SemiBold,
+                                    color = Color(0xFFFF3B30),
+                                )
+                            }
+                        }
+
                         LiquidButton(
                             onClick = {
-                                timer.start("Custom ${formatTime(manualTotal)}", manualTotal)
+                                EggTimerManager.startTimer(
+                                    context,
+                                    "Custom ${formatTime(manualTotal)}",
+                                    manualTotal,
+                                )
                                 userMinimizedFullscreen = false
                             },
                             backdrop = backdrop,
@@ -532,7 +628,21 @@ fun EggTimerScreen() {
                 secondaryTextColor = secondaryTextColor,
                 glassSurfaceColor = glassSurfaceColor,
                 accentColor = accentColor,
+                photo = photo,
+                isLightBackground = isLightBackground,
                 onMinimize = { userMinimizedFullscreen = true },
+                onPause = { EggTimerManager.pauseTimer(context) },
+                onResume = { EggTimerManager.resumeTimer(context) },
+                onStop = {
+                    EggTimerManager.stopTimer(context)
+                    userMinimizedFullscreen = false
+                },
+                onDismissRing = {
+                    EggTimerManager.dismissRing(context)
+                },
+                onAddMinute = {
+                    EggTimerManager.addMinute(context)
+                },
             )
         }
     }
@@ -563,7 +673,14 @@ private fun FullScreenTimerView(
     secondaryTextColor: Color,
     glassSurfaceColor: Color,
     accentColor: Color,
+    photo: ImageBitmap?,
+    isLightBackground: Boolean,
     onMinimize: () -> Unit,
+    onPause: () -> Unit,
+    onResume: () -> Unit,
+    onStop: () -> Unit,
+    onDismissRing: () -> Unit,
+    onAddMinute: () -> Unit,
 ) {
     val progress = if (timer.totalSeconds > 0) {
         1f - (timer.remainingSeconds.toFloat() / timer.totalSeconds.toFloat())
@@ -574,9 +691,49 @@ private fun FullScreenTimerView(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .safeDrawingPadding()
-            .padding(horizontal = 24.dp, vertical = 20.dp),
+            .background(if (isLightBackground) Color(0xFFF0F4FA) else Color(0xFF0C101A)),
     ) {
+        // 1. Ambient Background (custom photo or pastel gradient with glowing orbs)
+        AbstractBackground(photo = photo, backdrop = backdrop)
+
+        // 2. Full-screen frosted glass blur layer
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .then(
+                    if (supportsLiquidGlass) {
+                        Modifier.drawBackdrop(
+                            backdrop = backdrop,
+                            shape = { RoundedCornerShape(0.dp) },
+                            effects = {
+                                vibrancy()
+                                blur(24f.dp.toPx())
+                                lens(20f.dp.toPx(), 40f.dp.toPx())
+                            },
+                            highlight = { Highlight.Default },
+                            onDrawSurface = {
+                                drawRect(
+                                    if (isLightBackground) Color.White.copy(alpha = 0.35f)
+                                    else Color(0xFF0F172A).copy(alpha = 0.45f),
+                                )
+                            },
+                        )
+                    } else {
+                        Modifier.background(
+                            if (isLightBackground) Color.White.copy(alpha = 0.70f)
+                            else Color(0xFF0F172A).copy(alpha = 0.80f),
+                        )
+                    },
+                ),
+        )
+
+        // 3. Foreground interactive content
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(horizontal = 24.dp, vertical = 20.dp),
+        ) {
         // Top Header Bar
         Row(
             modifier = Modifier
@@ -614,10 +771,7 @@ private fun FullScreenTimerView(
             }
 
             LiquidIconButton(
-                onClick = {
-                    timer.stop()
-                    timer.dismissRing()
-                },
+                onClick = onStop,
                 backdrop = backdrop,
                 size = 44.dp,
                 surfaceColor = glassSurfaceColor,
@@ -637,7 +791,6 @@ private fun FullScreenTimerView(
                 .padding(vertical = 70.dp),
             contentAlignment = Alignment.Center,
         ) {
-            // Fullscreen boiling egg canvas
             BoilingEgg(
                 active = timer.running,
                 ringing = timer.ringing,
@@ -645,7 +798,6 @@ private fun FullScreenTimerView(
                 modifier = Modifier.fillMaxSize(),
             )
 
-            // Circular progress ring centered over the boiling display
             LiquidProgressRing(
                 progress = progress,
                 strokeWidth = 8.dp,
@@ -682,7 +834,7 @@ private fun FullScreenTimerView(
         ) {
             if (timer.ringing) {
                 LiquidButton(
-                    onClick = { timer.dismissRing() },
+                    onClick = onDismissRing,
                     backdrop = backdrop,
                     modifier = Modifier.fillMaxWidth().height(56.dp),
                     tint = accentColor,
@@ -703,7 +855,7 @@ private fun FullScreenTimerView(
                 ) {
                     // Stop Button
                     LiquidButton(
-                        onClick = { timer.stop() },
+                        onClick = onStop,
                         backdrop = backdrop,
                         modifier = Modifier.weight(1f).height(54.dp),
                         surfaceColor = glassSurfaceColor,
@@ -719,7 +871,7 @@ private fun FullScreenTimerView(
                     // Pause / Resume Main Action
                     LiquidButton(
                         onClick = {
-                            if (timer.running) timer.pause() else timer.resume()
+                            if (timer.running) onPause() else onResume()
                         },
                         backdrop = backdrop,
                         modifier = Modifier.weight(1.5f).height(54.dp),
@@ -736,10 +888,7 @@ private fun FullScreenTimerView(
 
                     // +1 Min Button
                     LiquidButton(
-                        onClick = {
-                            timer.remainingSeconds += 60
-                            timer.totalSeconds += 60
-                        },
+                        onClick = onAddMinute,
                         backdrop = backdrop,
                         modifier = Modifier.weight(1f).height(54.dp),
                         surfaceColor = glassSurfaceColor,
@@ -754,6 +903,7 @@ private fun FullScreenTimerView(
                 }
             }
         }
+    }
     }
 }
 
