@@ -1,39 +1,72 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package com.crischarles.bitlog
 
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import com.kyant.backdrop.backdrops.LayerBackdrop
+import com.kyant.backdrop.drawBackdrop
+import com.kyant.backdrop.effects.blur
+import com.kyant.backdrop.effects.lens
+import com.kyant.backdrop.effects.vibrancy
+import com.kyant.backdrop.highlight.Highlight
 
-/** Lets the user pick a background image and a ringtone. Each can be reset to the built-in default. */
-@OptIn(ExperimentalMaterial3Api::class)
+/**
+ * Apple iOS Liquid Glass Settings Modal Dialog.
+ * Replaces Material UI AlertDialog with a pure Kyant0 backdrop glass sheet.
+ */
 @Composable
-fun SettingsDialog(settings: AppSettings, onDismiss: () -> Unit) {
+fun SettingsDialog(
+    settings: AppSettings,
+    backdrop: LayerBackdrop,
+    textColor: Color,
+    secondaryTextColor: Color,
+    surfaceColor: Color,
+    accentColor: Color,
+    onDismiss: () -> Unit,
+) {
     val context = LocalContext.current
 
-    // Keep read access to the picked file across app restarts, when the provider allows it.
     fun keepReadAccess(uri: Uri) {
         try {
-            context.contentResolver.takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            context.contentResolver.takePersistableUriPermission(
+                uri,
+                Intent.FLAG_GRANT_READ_URI_PERMISSION,
+            )
         } catch (_: SecurityException) {
-            // The provider refused a persistable grant; the file stays readable for this session only.
+            // Read access available for this session only if persistent grant denied
         }
     }
 
@@ -43,6 +76,7 @@ fun SettingsDialog(settings: AppSettings, onDismiss: () -> Unit) {
             settings.setBackground(uri.toString())
         }
     }
+
     val pickSound = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             keepReadAccess(uri)
@@ -50,47 +84,202 @@ fun SettingsDialog(settings: AppSettings, onDismiss: () -> Unit) {
         }
     }
 
-    AlertDialog(
+    Dialog(
         onDismissRequest = onDismiss,
-        title = { Text("Settings") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Background", fontWeight = FontWeight.SemiBold)
-                    Text(
-                        if (settings.backgroundUri.isEmpty()) "Abstract default" else "Custom image",
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        // Scrim overlay with tap outside to dismiss
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.Black.copy(alpha = 0.40f))
+                .clickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = onDismiss,
+                )
+                .padding(24.dp),
+            contentAlignment = Alignment.Center,
+        ) {
+            // Glass modal card
+            val shape = RoundedCornerShape(32.dp)
+            val dialogModifier = if (supportsLiquidGlass) {
+                Modifier
+                    .fillMaxWidth()
+                    .drawBackdrop(
+                        backdrop = backdrop,
+                        shape = { shape },
+                        effects = {
+                            vibrancy()
+                            blur(18f.dp.toPx())
+                            lens(20f.dp.toPx(), 40f.dp.toPx())
+                        },
+                        highlight = { Highlight.Default },
+                        onDrawSurface = {
+                            drawRect(surfaceColor.copy(alpha = 0.35f))
+                        },
                     )
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+            } else {
+                Modifier
+                    .fillMaxWidth()
+                    .clip(shape)
+                    .background(Color(0xFF2C2C2E).copy(alpha = 0.85f))
+            }
+
+            Column(
+                modifier = dialogModifier
+                    .clickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = { /* prevent tap through */ },
+                    )
+                    .padding(24.dp),
+                verticalArrangement = Arrangement.spacedBy(20.dp),
+            ) {
+                // Header
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    LiquidText(
+                        text = "Settings",
+                        style = AppTypography.Title1,
+                        fontWeight = FontWeight.Bold,
+                        color = textColor,
+                    )
+                    LiquidIconButton(
+                        onClick = onDismiss,
+                        backdrop = backdrop,
+                        size = 32.dp,
+                        surfaceColor = surfaceColor,
                     ) {
-                        OutlinedButton(onClick = { pickImage.launch(arrayOf("image/*")) }) { Text("Choose image") }
+                        LiquidText(
+                            text = "✕",
+                            style = AppTypography.Callout,
+                            color = textColor,
+                        )
+                    }
+                }
+
+                // Background Image Setting
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    LiquidText(
+                        text = "Wallpaper & Luminance",
+                        style = AppTypography.Headline,
+                        fontWeight = FontWeight.SemiBold,
+                        color = textColor,
+                    )
+                    LiquidText(
+                        text = if (settings.backgroundUri.isEmpty()) {
+                            "Default fluid gradient · Luminance adaptive"
+                        } else {
+                            "Custom wallpaper · Colors adapt automatically"
+                        },
+                        style = AppTypography.Footnote,
+                        color = secondaryTextColor,
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    ) {
+                        LiquidButton(
+                            onClick = { pickImage.launch(arrayOf("image/*")) },
+                            backdrop = backdrop,
+                            modifier = Modifier.weight(1f),
+                            surfaceColor = surfaceColor,
+                        ) {
+                            LiquidText(
+                                text = "Choose Image",
+                                style = AppTypography.Callout,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textColor,
+                            )
+                        }
+
                         if (settings.backgroundUri.isNotEmpty()) {
-                            TextButton(onClick = { settings.setBackground("") }) { Text("Reset") }
+                            LiquidButton(
+                                onClick = { settings.setBackground("") },
+                                backdrop = backdrop,
+                                surfaceColor = surfaceColor,
+                            ) {
+                                LiquidText(
+                                    text = "Reset",
+                                    style = AppTypography.Callout,
+                                    color = secondaryTextColor,
+                                )
+                            }
                         }
                     }
                 }
+
+                // Ringtone Setting
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Ringtone", fontWeight = FontWeight.SemiBold)
-                    Text(
-                        if (settings.ringtoneUri.isEmpty()) "Built-in bell" else "Custom sound",
+                    LiquidText(
+                        text = "Alarm Sound",
+                        style = AppTypography.Headline,
+                        fontWeight = FontWeight.SemiBold,
+                        color = textColor,
                     )
+                    LiquidText(
+                        text = if (settings.ringtoneUri.isEmpty()) "Built-in bell chime" else "Custom audio file",
+                        style = AppTypography.Footnote,
+                        color = secondaryTextColor,
+                    )
+
                     Row(
-                        Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
                     ) {
-                        OutlinedButton(onClick = { pickSound.launch(arrayOf("audio/*")) }) { Text("Choose sound") }
+                        LiquidButton(
+                            onClick = { pickSound.launch(arrayOf("audio/*")) },
+                            backdrop = backdrop,
+                            modifier = Modifier.weight(1f),
+                            surfaceColor = surfaceColor,
+                        ) {
+                            LiquidText(
+                                text = "Choose Sound",
+                                style = AppTypography.Callout,
+                                fontWeight = FontWeight.SemiBold,
+                                color = textColor,
+                            )
+                        }
+
                         if (settings.ringtoneUri.isNotEmpty()) {
-                            TextButton(onClick = { settings.setRingtone("") }) { Text("Reset") }
+                            LiquidButton(
+                                onClick = { settings.setRingtone("") },
+                                backdrop = backdrop,
+                                surfaceColor = surfaceColor,
+                            ) {
+                                LiquidText(
+                                    text = "Reset",
+                                    style = AppTypography.Callout,
+                                    color = secondaryTextColor,
+                                )
+                            }
                         }
                     }
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                // Done Button
+                LiquidButton(
+                    onClick = onDismiss,
+                    backdrop = backdrop,
+                    modifier = Modifier.fillMaxWidth(),
+                    tint = accentColor,
+                    surfaceColor = accentColor.copy(alpha = 0.85f),
+                ) {
+                    LiquidText(
+                        text = "Done",
+                        style = AppTypography.Headline,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                    )
                 }
             }
-        },
-        confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Done") }
-        },
-    )
+        }
+    }
 }
