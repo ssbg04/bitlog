@@ -153,14 +153,14 @@ fun EggTimerScreen() {
     }
 
     // Smoothly animate the luminance for fluid theme adaptation
-    val animatedLuminance by animateFloatAsState(
+    val animatedLuminance = animateFloatAsState(
         targetValue = imageLuminance,
         animationSpec = IosInteractiveSpring,
         label = "animated_luminance",
     )
 
     // Responsive colors based on background image luminance
-    val isLightBackground = animatedLuminance > 0.48f
+    val isLightBackground = animatedLuminance.value > 0.48f
     val textColor = if (isLightBackground) Color(0xFF0F172A) else Color(0xFFF9FAFB)
     val secondaryTextColor = if (isLightBackground) Color(0xFF475569) else Color(0xCCF9FAFB)
     val glassSurfaceColor = if (isLightBackground) Color.White.copy(alpha = 0.28f) else Color.White.copy(alpha = 0.12f)

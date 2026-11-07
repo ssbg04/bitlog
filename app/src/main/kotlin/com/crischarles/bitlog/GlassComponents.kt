@@ -45,6 +45,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.kyant.backdrop.backdrops.LayerBackdrop
@@ -60,6 +61,11 @@ val supportsLiquidGlass = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 /** Apple iOS signature spring animation specifications */
 val IosInteractiveSpring = spring<Float>(
+    dampingRatio = 0.78f,
+    stiffness = 380f,
+)
+
+val IosIntSizeSpring = spring<IntSize>(
     dampingRatio = 0.78f,
     stiffness = 380f,
 )
@@ -350,7 +356,7 @@ fun LiquidProgressRing(
     trackColor: Color = Color.White.copy(alpha = 0.20f),
     progressColor: Color = Color(0xFFFF9500),
 ) {
-    val animatedProgress by animateFloatAsState(
+    val animatedProgress = animateFloatAsState(
         targetValue = progress.coerceIn(0f, 1f),
         animationSpec = IosInteractiveSpring,
         label = "liquid_progress",
@@ -376,7 +382,7 @@ fun LiquidProgressRing(
         )
 
         // Progress arc
-        if (animatedProgress > 0.001f) {
+        if (animatedProgress.value > 0.001f) {
             drawArc(
                 brush = Brush.sweepGradient(
                     0.0f to progressColor,
@@ -384,7 +390,7 @@ fun LiquidProgressRing(
                     1.0f to progressColor,
                 ),
                 startAngle = -90f,
-                sweepAngle = animatedProgress * 360f,
+                sweepAngle = animatedProgress.value * 360f,
                 useCenter = false,
                 topLeft = topLeft,
                 size = arcSize,

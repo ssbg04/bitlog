@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -37,7 +36,7 @@ fun AccordionSection(
     onToggle: () -> Unit,
     content: @Composable () -> Unit,
 ) {
-    val chevronRotation by animateFloatAsState(
+    val chevronRotation = animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
         animationSpec = IosInteractiveSpring,
         label = "accordion_chevron",
@@ -73,7 +72,7 @@ fun AccordionSection(
                     style = AppTypography.Footnote,
                     color = secondaryTextColor,
                 )
-                Box(modifier = Modifier.rotate(chevronRotation)) {
+                Box(modifier = Modifier.rotate(chevronRotation.value)) {
                     LiquidText(
                         text = "▼",
                         style = AppTypography.Caption,
@@ -85,8 +84,8 @@ fun AccordionSection(
 
         AnimatedVisibility(
             visible = expanded,
-            enter = fadeIn(IosInteractiveSpring) + expandVertically(IosInteractiveSpring),
-            exit = fadeOut(IosInteractiveSpring) + shrinkVertically(IosInteractiveSpring),
+            enter = fadeIn(IosInteractiveSpring) + expandVertically(IosIntSizeSpring),
+            exit = fadeOut(IosInteractiveSpring) + shrinkVertically(IosIntSizeSpring),
         ) {
             content()
         }
