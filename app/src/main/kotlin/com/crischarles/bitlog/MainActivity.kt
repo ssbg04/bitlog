@@ -9,6 +9,10 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.tooling.preview.Preview
 
 class MainActivity : ComponentActivity() {
@@ -28,7 +32,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            EggTimerScreen()
+            AppNavHost()
         }
     }
 
@@ -43,6 +47,21 @@ class MainActivity : ComponentActivity() {
         // App is now in background / not open: activate notch overlay if timer is active
         EggTimerManager.setAppForeground(this, false)
     }
+}
+
+@Composable
+fun AppNavHost() {
+    var currentScreen by remember { mutableStateOf<Screen>(Screen.Timer) }
+
+    when (currentScreen) {
+        Screen.Timer -> EggTimerScreen(onNavigateToRecipes = { currentScreen = Screen.Recipes })
+        Screen.Recipes -> EggRecipesScreen(onBack = { currentScreen = Screen.Timer })
+    }
+}
+
+enum class Screen {
+    Timer,
+    Recipes,
 }
 
 @Composable

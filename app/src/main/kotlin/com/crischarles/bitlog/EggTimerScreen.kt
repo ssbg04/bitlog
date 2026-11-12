@@ -75,7 +75,7 @@ import java.util.Date
 import java.util.Locale
 
 @Composable
-fun EggTimerScreen() {
+fun EggTimerScreen(onNavigateToRecipes: () -> Unit) {
     val context = LocalContext.current
     val timer = EggTimerManager.state
     val settings = remember { AppSettings(context) }
@@ -176,6 +176,19 @@ fun EggTimerScreen() {
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.SpaceBetween,
             ) {
+                LiquidIconButton(
+                    onClick = onNavigateToRecipes,
+                    backdrop = backdrop,
+                    size = 46.dp,
+                    surfaceColor = glassSurfaceColor,
+                ) {
+                    LiquidText(
+                        text = "🥚",
+                        style = AppTypography.Title2,
+                        color = textColor,
+                    )
+                }
+
                 Column {
                     LiquidText(
                         text = "bitlog",
@@ -392,7 +405,7 @@ fun EggTimerScreen() {
                                             interactionSource = remember { MutableInteractionSource() },
                                             indication = null,
                                             onClick = {
-                                                EggTimerManager.startTimer(context, preset.name, preset.seconds)
+                                                EggTimerManager.startTimer(context, preset.name, preset.baseSeconds)
                                                 userMinimizedFullscreen = false
                                             },
                                         )
@@ -416,7 +429,7 @@ fun EggTimerScreen() {
                                     }
 
                                     LiquidText(
-                                        text = formatTime(preset.seconds),
+                                        text = formatTime(preset.baseSeconds),
                                         style = AppTypography.Title2,
                                         fontWeight = FontWeight.Bold,
                                         color = textColor,

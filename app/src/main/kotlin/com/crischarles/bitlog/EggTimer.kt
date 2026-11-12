@@ -6,11 +6,37 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 
+/**
+ * Egg types with their relative sizes and cooking time multipliers.
+ * Quail eggs are ~1/5 the size of chicken eggs, duck eggs ~1.5x, ostrich ~24x.
+ */
+enum class EggType(val displayName: String, val sizeMultiplier: Float, val description: String) {
+    QUAIL("Quail", 0.2f, "Tiny delicate eggs, cook in seconds"),
+    BANTAM("Bantam", 0.5f, "Small heritage breed eggs"),
+    CHICKEN("Chicken", 1.0f, "Standard large chicken eggs"),
+    DUCK("Duck", 1.5f, "Richer yolk, larger white"),
+    GOOSE("Goose", 3.0f, "Huge eggs, very rich flavor"),
+    TURKEY("Turkey", 2.5f, "Similar to duck but larger"),
+    OSTRICH("Ostrich", 24.0f, "Massive eggs, feeds a crowd"),
+    EMU("Emu", 12.0f, "Dark green shells, rich taste"),
+}
+
+/**
+ * Base cooking times for CHICKEN eggs (sizeMultiplier = 1.0).
+ * Other egg types scale proportionally by their sizeMultiplier.
+ */
 data class EggPreset(
     val name: String,
-    val seconds: Int,
+    val baseSeconds: Int,
     val description: String = "",
-)
+    val eggType: EggType = EggType.CHICKEN,
+) {
+    fun getCookTimeFor(eggType: EggType): Int {
+        return (baseSeconds * eggType.sizeMultiplier).toInt()
+    }
+
+    fun getDisplayName(eggType: EggType): String = "${eggType.displayName} ${name}"
+}
 
 val EggPresets = listOf(
     EggPreset("Poached", 3 * 60 + 30, "Delicate poached egg, liquid center"),
@@ -20,6 +46,8 @@ val EggPresets = listOf(
     EggPreset("Hard-boiled", 10 * 60, "Solid bright yellow yolk, firm white"),
     EggPreset("Onsen Tamago", 13 * 60, "Silky hot spring egg, custard white"),
 )
+
+val AllEggTypes = EggType.values()
 
 data class HistoryEntry(
     val label: String,

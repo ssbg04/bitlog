@@ -44,7 +44,10 @@ java = ["src/test/java", "src/test/kotlin"]
 resources = ["src/test/resources"]
 
 [dependencies]
-implementation = ["kotlin-stdlib", "androidx.activity:activity-compose:1.13.0", "androidx.compose.ui:ui:1.12.0", "androidx.compose.ui:ui-graphics:1.12.0", "androidx.compose.ui:ui-text:1.12.0", "androidx.compose.ui:ui-unit:1.12.0", "androidx.compose.foundation:foundation:1.12.0", "androidx.compose.foundation:foundation-layout:1.12.0", "androidx.compose.animation:animation:1.12.0", "androidx.compose.animation:animation-core:1.12.0", "androidx.compose.material3:material3:1.4.0", "androidx.compose.ui:ui-tooling-preview:1.12.0", "io.github.kyant0:backdrop:2.0.1"]
+implementation = [{ platform = "androidx.compose:compose-bom:2024.12.01" }, "androidx.core:core-ktx:1.15.0", "androidx.lifecycle:lifecycle-runtime-ktx:2.8.7", "androidx.activity:activity-compose:1.10.1", "androidx.compose.ui:ui", "androidx.compose.ui:ui-graphics", "androidx.compose.ui:ui-tooling-preview", "androidx.compose.material3:material3", "androidx.compose.foundation:foundation", "androidx.compose.animation:animation", "io.github.kyant0:backdrop:2.0.1", "androidx.compose.runtime:runtime:1.11.2", "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.11.0", "kotlin-stdlib"]
+
+[dependencies.debug]
+implementation = ["androidx.compose.ui:ui-tooling", "androidx.compose.ui:ui-test-manifest"]
 
 [android]
 namespace = "com.crischarles.bitlog"
@@ -59,3 +62,4 @@ manifestPlaceholders = []
 buildConfigFields = []
 buildTypes = [{ name = "debug", debuggable = true, minifyEnabled = false, shrinkResources = false }, { name = "release", debuggable = false, minifyEnabled = false, shrinkResources = false, proguardFiles = ["proguard-android-optimize.txt", "proguard-rules.pro"] }]
 compose = true
+buildConfig = false
